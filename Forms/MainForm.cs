@@ -84,7 +84,7 @@ public sealed class MainForm : Form
     private readonly Label _adminTableOrderHint = new()
     {
         AutoSize = true,
-        Text = "Нажмите карточку занятого столика, чтобы увидеть его активный заказ.",
+        Text = "Нажмите карточку занятого столика, чтобы увидеть состав его активного заказа.",
         ForeColor = Color.DimGray,
         Padding = new Padding(4, 6, 0, 0)
     };
@@ -351,14 +351,14 @@ public sealed class MainForm : Form
 
         page.Controls.Add(CreateGridPanel(
             _adminTableOrderGrid,
-            "Заказ выбранного столика",
-            "Нажмите карточку занятого столика: здесь отобразится его незавершённый заказ.",
+            "Состав заказа выбранного столика",
+            "Нажмите карточку занятого столика: здесь отобразятся блюда, количество, цена и сумма.",
             _adminTableOrderHint));
         page.Controls.Add(CreateTableMapHost(
             _adminTableMap,
             _adminTableMapHint,
             "Столики ресторана",
-            "Зелёный — свободен, жёлтый — забронирован, красный — занят заказом. Нажмите карточку, чтобы увидеть заказ.",
+            "Зелёный — свободен, жёлтый — забронирован, красный — занят заказом. Нажмите карточку, чтобы увидеть состав заказа.",
             318));
         page.Controls.Add(CreateToolbar(
             "Схема столиков",
@@ -1260,30 +1260,44 @@ public sealed class MainForm : Form
 
         _adminTableMapHint.Text = _adminTableMap.Controls.Count == 0
             ? "Столики не найдены."
-            : "Зелёный — свободен, жёлтый — забронирован, красный — занят заказом. Нажмите карточку, чтобы увидеть заказ.";
+            : "Зелёный — свободен, жёлтый — забронирован, красный — занят заказом. Нажмите карточку, чтобы увидеть состав заказа.";
         _adminTableMap.ResumeLayout();
     }
 
     private async Task LoadAdminTableOrderAsync(int tableNumber, string tableStatus)
     {
-        // Используется уже существующая административная процедура, поэтому новое SQL-обновление не требуется.
+        // Сначала находим активный заказ выбранного столика, затем показываем только его позиции.
+        // Данные о том, кем создан заказ, в этой таблице не выводятся.
         var allOrders = await Database.ProcedureAsync("dbo.sp_AdminGetOrderStatuses");
-        var tableOrders = allOrders.Clone();
+        DataRow? activeOrder = null;
 
         foreach (DataRow row in allOrders.Rows)
         {
             var rowTableNumber = TryGetNumber(row, "№ столика", "TableNumber");
             var orderStatus = GetString(row, "Статус заказа", "Статус");
             if (rowTableNumber == tableNumber && !string.Equals(orderStatus, "Закрыт", StringComparison.OrdinalIgnoreCase))
-                tableOrders.ImportRow(row);
+            {
+                activeOrder = row;
+                break;
+            }
         }
 
-        _adminTableOrderGrid.DataSource = tableOrders;
-        _adminTableOrderHint.Text = tableOrders.Rows.Count > 0
-            ? $"Столик №{tableNumber}: показан текущий незавершённый заказ."
-            : tableStatus.Contains("занят", StringComparison.OrdinalIgnoreCase)
+        if (activeOrder is null || !TryGetRowId(activeOrder, "OrderId", out var orderId))
+        {
+            _adminTableOrderGrid.DataSource = new DataTable();
+            _adminTableOrderHint.Text = tableStatus.Contains("занят", StringComparison.OrdinalIgnoreCase)
                 ? $"Столик №{tableNumber} отмечен как занятый, но активный заказ в базе не найден. Обновите схему столиков."
                 : $"Столик №{tableNumber}: активного заказа нет.";
+            return;
+        }
+
+        var items = await Database.ProcedureAsync(
+            "dbo.sp_GetOrderItems",
+            Database.P("@OrderId", orderId));
+        _adminTableOrderGrid.DataSource = items;
+        _adminTableOrderHint.Text = items.Rows.Count > 0
+            ? $"Столик №{tableNumber} · заказ №{orderId}: показан состав заказа."
+            : $"Столик №{tableNumber} · заказ №{orderId}: заказ создан, но блюда пока не добавлены.";
     }
 
     private void RenderAdminReservationTableMap(DataTable tables)
@@ -1523,6 +1537,7 @@ public sealed class MainForm : Form
         ShowResult(result);
         await LoadReservationsAsync();
         await LoadReservationTableMapAsync();
+        if (_user.IsClient) await LoadClientTablesAsync();
         if (_user.IsAdmin)
         {
             await LoadTablesAsync();
@@ -1544,6 +1559,7 @@ public sealed class MainForm : Form
         ShowResult(result);
         await LoadReservationsAsync();
         await LoadReservationTableMapAsync();
+        if (_user.IsClient) await LoadClientTablesAsync();
         if (_user.IsAdmin)
         {
             await LoadTablesAsync();
@@ -1799,7 +1815,9 @@ public sealed class MainForm : Form
 
     private async Task LoadClientTablesAsync()
     {
-        var tables = await Database.ProcedureAsync("dbo.sp_GetAvailableTables");
+        var tables = await Database.ProcedureAsync(
+            "dbo.sp_GetAvailableTables",
+            Database.P("@UserId", _user.UserId));
         BindTables(_clientTable, tables);
     }
 
@@ -1813,7 +1831,7 @@ public sealed class MainForm : Form
     {
         if (_clientTable.SelectedItem is not TableOption table)
         {
-            Info("Выберите свободный столик.");
+            Info("Выберите свободный или забронированный вами столик.");
             return;
         }
         var result = await Database.ProcedureAsync(
