@@ -1,0 +1,10 @@
+White Rabbit v2.7 — Flexible shifts and automatic table distribution
+
+Added:
+- Administrator can still create a scheduled waiter shift.
+- Waiter can open a walk-in shift without prior scheduling, from 09:00 to 23:00.
+- Walk-in shift immediately appears in the administrator shift list.
+- Tables are automatically and evenly distributed between all waiters with OPEN shifts.
+- When a waiter opens or closes a shift, table assignments are recalculated.
+- Administrator can run redistribution manually with the new button.
+- Shift list shows whether a shift is scheduled or walk-in.

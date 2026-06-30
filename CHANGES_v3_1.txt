@@ -1,0 +1,8 @@
+﻿White Rabbit v3.1
+
+Исправлено:
+- dbo.CustomerOrder содержит ClientId, ChannelCode и GuestCount;
+- WaiterShiftId допускает NULL для заказов из клиентского приложения;
+- добавлены ограничения источника заказа и количества гостей;
+- создана dbo.sp_CreateUser для работы sp_AdminCreateEmployee;
+- пересозданы процедуры, не создававшиеся из-за ошибок 207.

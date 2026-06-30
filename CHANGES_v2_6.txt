@@ -1,0 +1,6 @@
+WHITE RABBIT v2.6
+- Fixed reservation procedure parameter mismatch.
+- Added dbo.sp_CreateReservationSafe.
+- Added dbo.sp_GetReservationTableMap.
+- Added client table map to the booking screen.
+- Made the Client.UserId unique rule apply only to non-NULL registered users.

@@ -1,0 +1,6 @@
+White Rabbit v2.8
+- Fixed the empty waiter table list after automatic table distribution.
+- Added a SQL update that suppresses internal result sets from distribution procedures.
+- Added a manual waiter table refresh button.
+- First assigned table is selected automatically.
+- Added SQL verification script.

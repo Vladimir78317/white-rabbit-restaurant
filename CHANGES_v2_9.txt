@@ -1,0 +1,6 @@
+White Rabbit v2.9
+- Схема столиков администратора вместо DataGridView.
+- Схема назначенных столиков официанта с выбором карточкой.
+- Брони по выбранным дате и столику на интерактивной схеме администратора.
+- Фильтры смен: дата, официант, статус, тип смены.
+- Добавлены процедуры sp_GetReservationDayTableMap, sp_GetReservationsByTableAndDate и sp_GetAdminWaiterShiftsFiltered.

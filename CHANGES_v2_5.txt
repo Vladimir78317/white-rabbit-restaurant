@@ -1,0 +1,8 @@
+White Rabbit v2.5
+
+- Fixed reservation error caused by UNIQUE KEY on Client.UserId with NULL values.
+- Replaced the old unique constraint with filtered unique index UX_Client_UserId_NotNull.
+- Updated sp_CreateReservationByClientName for registered clients and guests.
+- Registered client reservations are now linked to the correct Client record using UserId.
+- Guest reservations reuse an existing guest record by full name and phone.
+- Added SQL update, verification script and installation notes.
