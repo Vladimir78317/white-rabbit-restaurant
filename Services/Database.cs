@@ -7,7 +7,7 @@ public static class Database
 {
     // При другом имени сервера задайте WHITE_RABBIT_CONNECTION или измените эту строку.
     public static string ConnectionString => Environment.GetEnvironmentVariable("WHITE_RABBIT_CONNECTION")
-        ?? "Server=.;Database=WhiteRabbitRestaurant;Trusted_Connection=True;TrustServerCertificate=True;";
+        ?? "Server=OksanichVladimi\\SQLEXPRESS;Database=WhiteRabbitRestaurant;Trusted_Connection=True;TrustServerCertificate=True;";
 
     public static string ConnectionTargetForLog
     {
